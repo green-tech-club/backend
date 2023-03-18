@@ -3,7 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.users import user_routes
 from api.items import item_routes
-origins = ["*"]
+origins = [
+           "http://localhost:8000",
+           "http://localhost:3333",
+]
 
 app = FastAPI()
 app.include_router(user_routes)
@@ -20,7 +23,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello It's Greentech!"}
 
 if __name__ == "__main__":
     import uvicorn

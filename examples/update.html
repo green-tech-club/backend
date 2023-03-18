@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Update User</title>
+  </head>
+  <body>
+    <h1>Update User</h1>
+    <form>
+      <label for="id">ID:</label>
+      <input type="text" id="id" name="id" required />
+      <br /><br />
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" />
+      <br /><br />
+      <label for="email">email:</label>
+      <input type="text" id="email" name="email" />
+      <br /><br />
+      <button type="button" onclick="updateUser()">Update User</button>
+    </form>
+    <script>
+      async function updateUser() {
+        const id = document.getElementById("id").value;
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+
+        const url = `http://localhost:8000/users/${id}`;
+
+        const response = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+          }),
+        });
+
+        const data = await response.json();
+        console.log(data);
+      }
+    </script>
+  </body>
+</html>
