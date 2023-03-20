@@ -33,7 +33,7 @@ class UserModel(BaseModel):
     
     async def save_new_user(self):
         # self.create_hashed_password()
-        # i think this is the problem, its inserts the object as a dict but the "_id" is not what we want but an ObjectId('yadayada') 
+        # here was the problem, its inserted the object as a dict but the "_id" is not what we wanted but an ObjectId('yadayada') 
         # print(dict(vars(self)))
         user = jsonable_encoder(self)
         return await db['users'].insert_one(user)
