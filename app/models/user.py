@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
 from bson import ObjectId
+from fastapi.encoders import jsonable_encoder
 
 from .object import PyObjectId
 
@@ -22,18 +23,20 @@ class UserModel(BaseModel):
             "example": {
                 "name": "Jane Doe",
                 "email": "jdoe@example.com",
-                "password": "$2b$12$PQb5mqwNlQhb5GuceK2BROIjRa.ORdKxUesB4gUnx.TRvYMF/z906"
+                "password": "$2b$12$PQb5mqw"
             }
         }
 
-    def find_by_email(email):
-        user = db['users'].find_one({'email': email})
-        return user
+    async def find_by_email(email):
+        return await db['users'].find_one({'email': email})
     
     
-    def save_new_user(self):
-        self.create_hashed_password()
-        db['users'].insert_one(dict(vars(self)))
+    async def save_new_user(self):
+        # self.create_hashed_password()
+        # i think this is the problem, its inserts the object as a dict but the "_id" is not what we want but an ObjectId('yadayada') 
+        # print(dict(vars(self)))
+        user = jsonable_encoder(self)
+        return await db['users'].insert_one(user)
 
 
     def create_hashed_password(self):
@@ -42,7 +45,7 @@ class UserModel(BaseModel):
         self.password = hashed_password.decode('utf-8')
 
 
-    async def is_password_correct(entered_password, user_password):
+    def is_password_correct(entered_password, user_password):
         is_valid = bcrypt.checkpw(entered_password, user_password)
         return is_valid
 

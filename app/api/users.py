@@ -13,10 +13,16 @@ user_routes = APIRouter()
 
 @user_routes.post("/users", response_description="Add new user", response_model=UserModel)
 async def create_new_user(user_data: UserModel = Body(...)):
-    user = jsonable_encoder(user_data)
-    new_user = await db["users"].insert_one(user)
-    created_user = await db["users"].find_one({"_id": new_user.inserted_id})
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
+    try:
+        user_data.create_hashed_password()
+        insertion_result = await user_data.save_new_user()
+        # here we actually inspect the database to get the user we just created, we could also return the user_data object casted to JSON,
+        # but this is more accurate, and meanwhile its checks if the created user has a correct ID and not, lets say an ObjectId('yadayada')
+        created_user = await db["users"].find_one({"_id": insertion_result.inserted_id})
+        return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
+    except Exception as e:
+        print(e)
+        return {'Error: Failed to create a new user'}
 
 
 @user_routes.post("/signup", response_description="New users signing up")
@@ -27,9 +33,9 @@ async def create_user(request: Request):
             return {'error: This email already exists!'}
         
         new_user = UserModel(name=request._query_params['name'], email=request._query_params['email'], password=request._query_params['password'])   
-        new_user.save_new_user()
+        insertion_result = new_user.save_new_user()
 
-        return JSONResponse(status_code=201, 
+        return JSONResponse(status_code=status.HTTP_201_CREATED, 
                             content={'user': {
                                     'name': new_user.name,
                                     'email': new_user.email
