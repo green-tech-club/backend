@@ -8,6 +8,7 @@ from models.user import UserModel, UpdateUserModel
 from db.mongo import db
 
 import uuid
+import bcrypt
 
 user_routes = APIRouter()
 
@@ -32,8 +33,9 @@ async def create_user(request: Request):
         if (user != None):
             return {'error: This email already exists!'}
         
-        new_user = UserModel(name=request._query_params['name'], email=request._query_params['email'], password=request._query_params['password'])   
-        insertion_result = new_user.save_new_user()
+        new_user_hashed_pass = create_hashed_password(request._query_params['password'])
+        new_user = UserModel(name=request._query_params['name'], email=request._query_params['email'], password= new_user_hashed_pass)   
+        insertion_result = await new_user.save_new_user()
 
         return JSONResponse(status_code=status.HTTP_201_CREATED, 
                             content={'user': {
@@ -43,6 +45,12 @@ async def create_user(request: Request):
     except Exception as e:
         return {'Error: Failed to create a new user'}
 
+
+
+def create_hashed_password(enterd_pass: str):
+    salt = bcrypt.gensalt()
+    hashed_pass = bcrypt.hashpw(enterd_pass.encode('utf-8'), salt)
+    return hashed_pass.decode('utf-8')
 
 @user_routes.post("/login", response_description="Endpoint for login for existing users")
 async def login(reqest: Request):

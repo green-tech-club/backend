@@ -39,11 +39,6 @@ class UserModel(BaseModel):
         return await db['users'].insert_one(user)
 
 
-    def create_hashed_password(self):
-        salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(self.password.encode('utf-8'), salt)
-        self.password = hashed_password.decode('utf-8')
-
 
     def is_password_correct(entered_password, user_password):
         is_valid = bcrypt.checkpw(entered_password, user_password)
