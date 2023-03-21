@@ -12,10 +12,13 @@ import bcrypt
 
 user_routes = APIRouter()
 
-@user_routes.post("/users", response_description="Add new user", response_model=UserModel)
+@user_routes.post("/users", response_description="Add new user")
 async def create_new_user(user_data: UserModel = Body(...)):
     try:
-        user_data.create_hashed_password()
+        user = await UserModel.find_by_email(user_data.email)
+        if user is not None:
+            return {'error: This email already exists!'}
+        user_data.password = create_hashed_password(user_data.password)
         insertion_result = await user_data.save_new_user()
         # here we actually inspect the database to get the user we just created, we could also return the user_data object casted to JSON,
         # but this is more accurate, and meanwhile its checks if the created user has a correct ID and not, lets say an ObjectId('yadayada')
