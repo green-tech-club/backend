@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import Body, HTTPException, status
+from fastapi import Body, HTTPException, status, Request
 from fastapi import APIRouter
 from fastapi.responses import Response, JSONResponse
 from fastapi.encoders import jsonable_encoder
@@ -7,21 +7,81 @@ from fastapi.encoders import jsonable_encoder
 from models.user import UserModel, UpdateUserModel
 from db.mongo import db
 
+import uuid
+import bcrypt
+
 user_routes = APIRouter()
 
-@user_routes.post("/users", response_description="Add new user", response_model=UserModel)
+@user_routes.post("/users", response_description="Add new user")
 async def create_new_user(user_data: UserModel = Body(...)):
-    user = jsonable_encoder(user_data)
-    new_user = await db["users"].insert_one(user)
-    created_user = await db["users"].find_one({"_id": new_user.inserted_id})
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
+    try:
+        user = await UserModel.find_by_email(user_data.email)
+        if user is not None:
+            return {'error: This email already exists!'}
+        user_data.password = create_hashed_password(user_data.password)
+        insertion_result = await user_data.save_new_user()
+        # here we actually inspect the database to get the user we just created, we could also return the user_data object casted to JSON,
+        # but this is more accurate, and meanwhile its checks if the created user has a correct ID and not, lets say an ObjectId('yadayada')
+        created_user = await db["users"].find_one({"_id": insertion_result.inserted_id})
+        return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
+    except Exception as e:
+        print(e)
+        return {'Error: Failed to create a new user'}
 
 
-@user_routes.get("/users", response_description="List all (first 1000 actually) users", response_model=List[UserModel])
+@user_routes.post("/signup", response_description="New users signing up")
+async def create_user(request: Request):
+    try:
+        user = await UserModel.find_by_email(request._query_params['email'])
+        if (user != None):
+            return {'error: This email already exists!'}
+        
+        new_user_hashed_pass = create_hashed_password(request._query_params['password'])
+        new_user = UserModel(name=request._query_params['name'], email=request._query_params['email'], password= new_user_hashed_pass)   
+        insertion_result = await new_user.save_new_user()
+
+        return JSONResponse(status_code=status.HTTP_201_CREATED, 
+                            content={'user': {
+                                    'name': new_user.name,
+                                    'email': new_user.email
+                            }})
+    except Exception as e:
+        return {'Error: Failed to create a new user'}
+
+
+
+def create_hashed_password(enterd_pass: str):
+    salt = bcrypt.gensalt()
+    hashed_pass = bcrypt.hashpw(enterd_pass.encode('utf-8'), salt)
+    return hashed_pass.decode('utf-8')
+
+@user_routes.post("/login", response_description="Endpoint for login for existing users")
+async def login(reqest: Request):
+    print('login')
+    try:
+        user = await UserModel.find_by_email(reqest._query_params['email'])
+        if (user): 
+            # check password
+            is_pass_valid = await UserModel.is_password_correct(reqest._query_params['password'].encode('utf-8'), user['password'].encode('utf-8'))
+            if (is_pass_valid):
+                # generate token
+                token = str(uuid.uuid4())
+                # login succesfull
+                return JSONResponse(status_code=200, 
+                content={'message': 'successfully logged in', 'token': token})
+            else:
+                return JSONResponse(status_code=403, content={'message': 'entered password is wrong'})
+        else:
+            return {'Error: user does not exist.'}
+    except Exception as e:
+        print(e)
+        return {'Error: failed to login'}
+
+
+@user_routes.get("/list/users", response_description="List all (first 1000 actually) users", response_model=List[UserModel])
 async def list_users():
     users = await db["users"].find().to_list(1000)
     return users
-
 
 @user_routes.get("/users/{id}", response_description="Get a single user", response_model=UserModel)
 async def get_user_by_id(id: str):
