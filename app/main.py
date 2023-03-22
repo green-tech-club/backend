@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+
 from api.users import user_routes
 from api.items import item_routes
+from api.auth import auth_routes
+
 origins = [
            "http://localhost:8000",
            "http://localhost:3333",
@@ -11,6 +14,7 @@ origins = [
 app = FastAPI()
 app.include_router(user_routes)
 app.include_router(item_routes)
+app.include_router(auth_routes)
 
 app.add_middleware(
     CORSMiddleware,

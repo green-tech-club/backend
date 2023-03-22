@@ -9,6 +9,7 @@ from db.mongo import db
 import bcrypt
 
 
+
 class UserModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     name: str = Field(...)
@@ -26,15 +27,12 @@ class UserModel(BaseModel):
                 "password": "$2b$12$PQb5mqw"
             }
         }
-
+    @staticmethod
     async def find_by_email(email):
         return await db['users'].find_one({'email': email})
     
     
     async def save_new_user(self):
-        # self.create_hashed_password()
-        # here was the problem, its inserted the object as a dict but the "_id" is not what we wanted but an ObjectId('yadayada') 
-        # print(dict(vars(self)))
         user = jsonable_encoder(self)
         return await db['users'].insert_one(user)
 
@@ -57,3 +55,9 @@ class UpdateUserModel(BaseModel):
                 "email": "jdoe@example.com",
             }
         }
+
+class UserInDB(BaseModel):
+    email: EmailStr
+
+    class Config:
+        orm_mode = True
