@@ -8,7 +8,7 @@ from .object import PyObjectId
 from db.mongo import db
 import bcrypt
 
-
+# TODO: maybe we should implement more Pydantic models
 
 class UserModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")

@@ -2,10 +2,10 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
-
 from jose import JWTError, jwt
-from config import Config
+import secrets
 
+from config import Config
 from db.mongo import db
 from models.user import UserModel, UserInDB
 
