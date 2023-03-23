@@ -5,13 +5,13 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 import secrets
 
-from config import Config
+from config import config
 from db.mongo import db
 from models.user import UserModel, UserInDB
 
 auth_routes = APIRouter()
 
-SECRET_KEY = Config.secret_key
+SECRET_KEY = config.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
