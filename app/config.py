@@ -8,6 +8,7 @@ class Config(BaseSettings):
     secret_key: str = secrets.token_hex(32)
 
     class Config:
+        # TODO: make it platform independent
         env_file = "..\.env"
         env_file_encoding = "utf-8"
 
