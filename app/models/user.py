@@ -29,12 +29,14 @@ class UserModel(BaseModel):
         }
     @staticmethod
     async def find_by_email(email):
-        return await db['users'].find_one({'email': email})
+        user = await db['users'].find_one({'email': email})
+        return user
     
     
     async def save_new_user(self):
         user = jsonable_encoder(self)
-        return await db['users'].insert_one(user)
+        inserted = await db['users'].insert_one(user)
+        return inserted
 
 
 
@@ -60,4 +62,10 @@ class UserInDB(BaseModel):
     email: EmailStr
 
     class Config:
-        orm_mode = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "email": "jdoe@example.com",
+            }
+        }
