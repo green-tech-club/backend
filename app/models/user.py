@@ -8,6 +8,7 @@ from .object import PyObjectId
 from db.mongo import db
 import bcrypt
 
+# TODO: maybe we should implement more Pydantic models
 
 class UserModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
@@ -26,17 +27,16 @@ class UserModel(BaseModel):
                 "password": "$2b$12$PQb5mqw"
             }
         }
-
+    @staticmethod
     async def find_by_email(email):
-        return await db['users'].find_one({'email': email})
+        user = await db['users'].find_one({'email': email})
+        return user
     
     
     async def save_new_user(self):
-        # self.create_hashed_password()
-        # here was the problem, its inserted the object as a dict but the "_id" is not what we wanted but an ObjectId('yadayada') 
-        # print(dict(vars(self)))
         user = jsonable_encoder(self)
-        return await db['users'].insert_one(user)
+        inserted = await db['users'].insert_one(user)
+        return inserted
 
 
 
@@ -54,6 +54,18 @@ class UpdateUserModel(BaseModel):
         schema_extra = {
             "example": {
                 "name": "Jane Doe",
+                "email": "jdoe@example.com",
+            }
+        }
+
+class UserInDB(BaseModel):
+    email: EmailStr
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
                 "email": "jdoe@example.com",
             }
         }

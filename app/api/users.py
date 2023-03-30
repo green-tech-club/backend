@@ -1,81 +1,42 @@
 from typing import List, Optional
-from fastapi import Body, HTTPException, status, Request
+from datetime import datetime, timedelta
+from fastapi import Body, Depends, HTTPException, status, Request
 from fastapi import APIRouter
 from fastapi.responses import Response, JSONResponse
-from fastapi.encoders import jsonable_encoder
-
-from models.user import UserModel, UpdateUserModel
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from models.user import UserModel, UpdateUserModel, UserInDB
 from db.mongo import db
+from config import config
 
-import uuid
-import bcrypt
+
+SECRET_KEY = config.secret_key
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 
 user_routes = APIRouter()
 
-@user_routes.post("/users", response_description="Add new user")
+@user_routes.post("/signup", response_description="Add new user", status_code=201)
 async def create_new_user(user_data: UserModel = Body(...)):
     try:
         user = await UserModel.find_by_email(user_data.email)
-        if user is not None:
-            return {'error: This email already exists!'}
-        user_data.password = create_hashed_password(user_data.password)
+        if user:
+            raise HTTPException(status_code=409, detail="This email already exists!")
+
+        user_data.password = get_password_hash(user_data.password)
         insertion_result = await user_data.save_new_user()
-        # here we actually inspect the database to get the user we just created, we could also return the user_data object casted to JSON,
-        # but this is more accurate, and meanwhile its checks if the created user has a correct ID and not, lets say an ObjectId('yadayada')
         created_user = await db["users"].find_one({"_id": insertion_result.inserted_id})
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
     except Exception as e:
         print(e)
-        return {'Error: Failed to create a new user'}
+        return {'Error': 'Failed to create a new user'}
 
-
-@user_routes.post("/signup", response_description="New users signing up")
-async def create_user(request: Request):
-    try:
-        user = await UserModel.find_by_email(request._query_params['email'])
-        if (user != None):
-            return {'error: This email already exists!'}
-        
-        new_user_hashed_pass = create_hashed_password(request._query_params['password'])
-        new_user = UserModel(name=request._query_params['name'], email=request._query_params['email'], password= new_user_hashed_pass)   
-        insertion_result = await new_user.save_new_user()
-
-        return JSONResponse(status_code=status.HTTP_201_CREATED, 
-                            content={'user': {
-                                    'name': new_user.name,
-                                    'email': new_user.email
-                            }})
-    except Exception as e:
-        return {'Error: Failed to create a new user'}
-
-
-
-def create_hashed_password(enterd_pass: str):
-    salt = bcrypt.gensalt()
-    hashed_pass = bcrypt.hashpw(enterd_pass.encode('utf-8'), salt)
-    return hashed_pass.decode('utf-8')
-
-@user_routes.post("/login", response_description="Endpoint for login for existing users")
-async def login(reqest: Request):
-    print('login')
-    try:
-        user = await UserModel.find_by_email(reqest._query_params['email'])
-        if (user): 
-            # check password
-            is_pass_valid = await UserModel.is_password_correct(reqest._query_params['password'].encode('utf-8'), user['password'].encode('utf-8'))
-            if (is_pass_valid):
-                # generate token
-                token = str(uuid.uuid4())
-                # login succesfull
-                return JSONResponse(status_code=200, 
-                content={'message': 'successfully logged in', 'token': token})
-            else:
-                return JSONResponse(status_code=403, content={'message': 'entered password is wrong'})
-        else:
-            return {'Error: user does not exist.'}
-    except Exception as e:
-        print(e)
-        return {'Error: failed to login'}
 
 
 @user_routes.get("/list/users", response_description="List all (first 1000 actually) users", response_model=List[UserModel])
@@ -116,3 +77,92 @@ async def delete_user_by_id(id: str):
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     raise HTTPException(status_code=404, detail=f"user {id} not found")
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+async def authenticate_user(email: str, password: str):
+    user = await db["users"].find_one({"email": email})
+    if not user:
+        return False
+    if not verify_password(password, user["password"]):
+        return False
+    return UserInDB(email=user["email"])
+
+def create_access_token(data: dict, expires_delta: timedelta):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def decode_access_token(access_token):
+    decoded_token = jwt.decode(access_token, SECRET_KEY, ALGORITHM)
+    return decoded_token
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if email is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        token_data = UserInDB(email=email)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = await db["users"].find_one({"email": email})
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UserModel(**user)
+
+
+@user_routes.post("/login")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@user_routes.post("/refresh_token")
+async def refresh_token(access_token: str = Depends(oauth2_scheme)):
+    """
+    Endpoint to refresh the access token.
+    """
+    try:
+        payload = decode_access_token(access_token)
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid access token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid access token")
+    user = await UserModel.find_by_email(email)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid access token")
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access_token = create_access_token(data={"sub": user['email']}, expires_delta=access_token_expires)
+    return {"access_token": new_access_token, "token_type": "bearer"}
+
+
+@user_routes.get("/protected_route")
+async def protected_route(current_user: UserModel = Depends(get_current_user)):
+    return {"message": "This is a protected route!"}
