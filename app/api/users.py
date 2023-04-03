@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.models.token import AccessToken
 from app.db import db
 from app.models.user import User
-from app.schemas.user import UserRead
+from app.models.user import UserRead
 from app.users import current_active_user
 
 

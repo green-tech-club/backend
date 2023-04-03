@@ -4,7 +4,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import User, AccessToken, db
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.models.user import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
 from app.api.users import list_any
 app = FastAPI()
