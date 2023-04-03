@@ -17,4 +17,4 @@ Under the `.\examples\` folder there are some examples like `delete.html` and `u
  
  You can serve them with python by:
  - `cd .\examples`
- - `python -m http.server 3333`
+ - `python -m http.server 3000`
