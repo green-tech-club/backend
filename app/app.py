@@ -1,12 +1,12 @@
-import json
-from beanie import PydanticObjectId, init_beanie
+from beanie import init_beanie
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import User, AccessToken, db
 from app.models.user import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
-from app.api.users import list_any
+from app.api.users import user_routes
+from app.api.tokens import token_routes
 app = FastAPI()
 
 origins = [
@@ -47,7 +47,9 @@ app.include_router(
     tags=["users"],
 )
 
-app.include_router(list_any, prefix="/list", tags=["list"])
+app.include_router(user_routes, prefix="/user", tags=["users"])
+
+app.include_router(token_routes, prefix="/auth", tags=["auth"])
 
 @app.get("/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):

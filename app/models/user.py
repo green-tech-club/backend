@@ -1,7 +1,5 @@
 from beanie import PydanticObjectId
 from fastapi_users import schemas
-
-from beanie import PydanticObjectId
 from fastapi_users.db import BeanieBaseUser
 
 class User(BeanieBaseUser[PydanticObjectId]):
