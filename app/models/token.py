@@ -3,3 +3,4 @@ from beanie import PydanticObjectId
 
 class AccessToken(BeanieBaseAccessToken[PydanticObjectId]):  
     pass
+

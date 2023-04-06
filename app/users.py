@@ -40,11 +40,11 @@ async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)):
     yield UserManager(user_db)
 
 
-bearer_transport = BearerTransport(tokenUrl="auth/login")
-cookie_transport = CookieTransport(cookie_max_age=3600)
+transport = BearerTransport(tokenUrl="auth/login")
+# transport = CookieTransport(cookie_max_age=3600)
 
-def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+# def get_jwt_strategy() -> JWTStrategy:
+#     return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
 
 def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db),
@@ -53,7 +53,7 @@ def get_database_strategy(
 
 auth_backend = AuthenticationBackend(
     name="database",
-    transport=bearer_transport,
+    transport=transport,
     get_strategy=get_database_strategy,
 )
 
