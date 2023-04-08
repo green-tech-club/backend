@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Login</title>
+  </head>
+  <body>
+    <h1>Login</h1>
+    <form id="login-form">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required>
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+      <button type="submit">Log in</button>
+    </form>
+
+    <script>
+      const loginForm = document.querySelector('#login-form');
+
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const username = document.querySelector('#username').value;
+        const password = document.querySelector('#password').value;
+
+        try {
+          const response = await fetch('http://localhost:8000/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              'username': username,
+              'password': password
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            sessionStorage.setItem('token', data.access_token);
+            window.location.href = 'http://localhost:3000/';
+          } else {
+            alert('Failed to log in');
+            // handle login error
+          }
+        } catch (error) {
+          alert('Failed to log in');
+          // handle login error
+        }
+      });
+    </script>
+  </body>
+</html>
