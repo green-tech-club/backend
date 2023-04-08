@@ -14,6 +14,7 @@
 
     <script>
       const deleteForm = document.querySelector('#delete-form');
+      const token = sessionStorage.getItem('token');
 
       deleteForm.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -23,7 +24,8 @@
           const response = await fetch(`http://localhost:8000/users/${userId}`, {
             method: 'DELETE',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
             },
           });
 

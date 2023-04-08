@@ -13,7 +13,7 @@ Here is a quick [demo video](https://www.youtube.com/watch?v=dQw4w9WgXcQ) about 
 5. `python .\app\main.py`
 6. open in your browser: http://localhost:8000/docs
 
-Under the `.\examples\` folder there are some examples like `delete.html` and `update.html` to show how a request towards the API should look like.
+Under the `.\examples\` folder there are some examples like `delete.html` and `login.html` to show how a request towards the API should look like.
  
  You can serve them with python by:
  - `cd .\examples`
