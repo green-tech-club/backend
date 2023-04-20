@@ -2,7 +2,8 @@ from beanie import init_beanie
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db import User, AccessToken, db
+from app.api.report_storage import report_routes
+from app.db.db import User, AccessToken, db
 from app.models.user import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
 from app.api.users import user_routes
@@ -46,6 +47,7 @@ app.include_router(
     prefix="/users",
     tags=["users"],
 )
+app.include_router(report_routes, prefix="/reports", tags=["reports"])
 
 app.include_router(user_routes, prefix="/user", tags=["users"])
 
