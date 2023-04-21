@@ -3,6 +3,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import User, AccessToken, db
+from app.models.token import InviteToken
 from app.models.user import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
 from app.api.users import user_routes
@@ -26,11 +27,11 @@ app.add_middleware(
 app.include_router(
     fastapi_users.get_auth_router(auth_backend), prefix="/auth", tags=["auth"]
 )
-app.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/auth",
-    tags=["auth"],
-)
+# app.include_router(
+#     fastapi_users.get_register_router(UserRead, UserCreate),
+#     prefix="/auth",
+#     tags=["auth"],
+# )
 app.include_router(
     fastapi_users.get_reset_password_router(),
     prefix="/auth",
@@ -66,5 +67,6 @@ async def on_startup():
         document_models=[
             User,
             AccessToken,
+            InviteToken,
         ],
     )
