@@ -6,13 +6,11 @@ from fastapi_users import BaseUserManager, FastAPIUsers
 from fastapi_users.authentication import (
     AuthenticationBackend,
     BearerTransport,
-    JWTStrategy,
-    CookieTransport,
 )
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase, DatabaseStrategy
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 
-from app.db import User, AccessToken, get_user_db, get_access_token_db
+from app.db.db import User, AccessToken, get_user_db, get_access_token_db
 from app.settings import settings
 
 SECRET = settings.secret_key
