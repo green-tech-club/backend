@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.report_storage import report_routes
 from app.db.db import User, AccessToken, db
+from app.models.report_storage import Report
 from app.models.user import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
 from app.api.users import user_routes
@@ -68,5 +69,6 @@ async def on_startup():
         document_models=[
             User,
             AccessToken,
+            Report,
         ],
     )
