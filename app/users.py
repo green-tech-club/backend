@@ -10,7 +10,7 @@ from fastapi_users.authentication import (
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase, DatabaseStrategy
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 
-from app.db.db import User, AccessToken, get_user_db, get_access_token_db
+from app.db.db import User, AccessToken, get_user_db, get_access_token_db, get_invite_token_db
 from app.settings import settings
 
 SECRET = settings.secret_key
