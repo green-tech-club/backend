@@ -11,6 +11,7 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase, Databa
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 
 from app.db.db import User, AccessToken, get_user_db, get_access_token_db, get_invite_token_db
+from app.models.invitation import Invitation
 from app.settings import settings
 
 SECRET = settings.secret_key
@@ -21,7 +22,13 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
-        print(f"User {user.id} has registered.")
+        try:
+            deleted = await Invitation.delete(await Invitation.find_by_email(user.email))
+            if deleted:
+                deleted = user.email
+        except:
+            deleted = 0
+        print(f"User {user.id} has registered.\nDeleted invitation code from the database, for email: {deleted}")
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
@@ -47,7 +54,7 @@ transport = BearerTransport(tokenUrl="auth/login")
 def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db),
 ) -> DatabaseStrategy:
-    return DatabaseStrategy(access_token_db, lifetime_seconds=3600)
+    return DatabaseStrategy(access_token_db, lifetime_seconds=settings.token_lifetime)
 
 auth_backend = AuthenticationBackend(
     name="database",

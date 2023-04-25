@@ -3,7 +3,8 @@ from app.settings import settings
 from fastapi_users.db import BeanieUserDatabase
 from fastapi_users_db_beanie.access_token import BeanieAccessTokenDatabase
 from app.models.user import User
-from app.models.token import AccessToken, InviteToken
+from app.models.token import AccessToken
+from app.models.invitation import Invitation
 
 db_user = settings.db_username
 db_password = settings.db_password
@@ -22,4 +23,4 @@ async def get_access_token_db():
     yield BeanieAccessTokenDatabase(AccessToken)
 
 async def get_invite_token_db():  
-    yield BeanieAccessTokenDatabase(InviteToken)
+    yield BeanieAccessTokenDatabase(Invitation)

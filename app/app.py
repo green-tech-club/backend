@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.report_storage import report_routes
 from app.db.db import User, AccessToken, db
 from app.models.report_storage import Report
-from app.models.token import InviteToken
-from app.models.user import UserCreate, UserRead, UserUpdate
+from app.models.user import UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
 from app.api.users import user_routes
-from app.api.tokens import token_routes
+from app.api.auth import auth_routes
+from app.models.invitation import Invitation
 app = FastAPI()
 
 origins = [
@@ -33,6 +33,7 @@ app.include_router(
 #     fastapi_users.get_register_router(UserRead, UserCreate),
 #     prefix="/auth",
 #     tags=["auth"],
+#     dependencies=[Depends(verify_invitation_email)],
 # )
 app.include_router(
     fastapi_users.get_reset_password_router(),
@@ -53,7 +54,7 @@ app.include_router(report_routes, prefix="/reports", tags=["reports"])
 
 app.include_router(user_routes, prefix="/user", tags=["users"])
 
-app.include_router(token_routes, prefix="/auth", tags=["auth"])
+app.include_router(auth_routes, prefix="/auth", tags=["auth"])
 
 @app.get("/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
@@ -71,6 +72,6 @@ async def on_startup():
             User,
             AccessToken,
             Report,
-            InviteToken,
+            Invitation,
         ],
     )

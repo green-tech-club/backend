@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.db.db import db
 from app.models.user import User
 
+
 user_routes = APIRouter()
 
 
