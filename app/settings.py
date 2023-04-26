@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     db_password: str
     db_cluster: str
     secret_key: str
+    token_lifetime: int
 
     class Config:
         env_file = ".env"

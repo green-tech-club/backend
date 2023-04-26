@@ -7,8 +7,8 @@ class InvitationCreate(BaseModel):
     email: EmailStr
 
 class InvitationRead(BaseModel):
-    email: EmailStr
     code: str
+
 
 class Invitation(Document):
     email: EmailStr

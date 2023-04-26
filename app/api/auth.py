@@ -35,22 +35,23 @@ async def refresh_token(user: User = Depends(current_active_user),
 
 
  
-async def verify_invitation(invitation_code: str):
+async def verify_invitation(invitation: InvitationRead):
     """
     Verify if the provided invitation code exists in the database. Raise an HTTPException with status code 403 (Forbidden) if not found.
     """
-    inv = await Invitation.find_by_code(invitation_code)
+    inv = await Invitation.find_by_code(invitation.code)
     if not inv:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error_code.INVALID_CREDENTIALS)
     print(f'found invitation: {inv}')
+    return inv
 
 
 @auth_routes.post("/is-invitation-valid")
-async def is_invitation_valid(invitation_code: str = Depends(verify_invitation)):
+async def is_invitation_valid(invitation: InvitationRead = Depends(verify_invitation)):
     """
     Check if the provided invitation is valid and return its status and associated email.
     """
-    verified_invitation = await Invitation.find_by_code(invitation_code)
+    verified_invitation = await Invitation.find_by_code(invitation.code)
     return {"status": "valid", "email": verified_invitation.email}
 
 @auth_routes.post("/send-invitation",responses={
@@ -69,6 +70,11 @@ async def is_invitation_valid(invitation_code: str = Depends(verify_invitation))
                                                                     "value": {
                                                                         "detail": error_code.USER_NOT_SUPERUSER
                                                                     }},
+                                                                error_code.INVITATION_HAS_BEEN_SENT_ALREADY: {
+                                                                    "summary": "Invitation to this email has benn sent already.",
+                                                                    "value": {
+                                                                        "detail": error_code.INVITATION_HAS_BEEN_SENT_ALREADY
+                                                                    }},
                                                                 }}}}})
 
 
@@ -80,6 +86,12 @@ async def send_invitation(invitation: InvitationCreate,
     Raise an HTTPException with status code 400 (Bad Request) if the email is already registered, or 403 (Forbidden) if the user is not a superuser.
     """
     if user.is_superuser:
+        
+        if await Invitation.find_by_email(invitation.email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_code.INVITATION_HAS_BEEN_SENT_ALREADY,
+            )
         try:
             if await manager.get_by_email(invitation.email):
                 raise HTTPException(
@@ -97,7 +109,7 @@ async def send_invitation(invitation: InvitationCreate,
         )
 
     
-@auth_routes.post("/list/invitation", response_model=list[InvitationRead])
+@auth_routes.post("/list/invitation", response_model=list[Invitation])
 async def list_invitations(user: User = Depends(current_active_user)):
     """
     List all invitations. Only superusers are allowed to access this route.\
@@ -155,14 +167,14 @@ async def list_invitations(user: User = Depends(current_active_user)):
 
 
 async def register( request: Request, user: UserCreate,
-                    invitation_code: str = Depends(verify_invitation), 
+                    invitation: InvitationRead = Depends(verify_invitation), 
                     manager: UserManager = Depends(get_user_manager)):
     """
     Register a new user with the provided information and the valid invitation. \
     Raise an HTTPException with status code 400 (Bad Request) if the email doesn't match the invitation email,\
     if the email is already registered, or if the password validation fails.
     """
-    verified_invitation = await Invitation.find_by_code(invitation_code)
+    verified_invitation = await Invitation.find_by_code(invitation.code)
     if user.email != verified_invitation.email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_code.REGISTER_INVALID_INVITATION_EMAIL)
     else:
