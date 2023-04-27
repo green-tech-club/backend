@@ -3,19 +3,24 @@ from fastapi_users import schemas
 from fastapi_users.db import BeanieBaseUser
 
 class User(BeanieBaseUser[PydanticObjectId]):
-    hashed_password: str = None
-    name: str = None
-    role: str = None
+    first_name: str
+    last_name: str
+    country: str
 
+       
+                        
 class UserRead(schemas.BaseUser[PydanticObjectId]):
-    name: str = None
-    role: str = None
+    first_name: str
+    last_name: str
+    country: str
+
 
 
 class UserCreate(schemas.BaseUserCreate):
-    name: str = None
-    role: str = None
+    first_name: str
+    last_name: str
+    country: str
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    password: str = None
+    password: str

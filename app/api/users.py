@@ -1,10 +1,11 @@
 from typing import List
-from fastapi import APIRouter, Depends
-from app.db import db
+from fastapi import APIRouter
+from app.db.db import db
 from app.models.user import User
 
 
 user_routes = APIRouter()
+
 
 @user_routes.get("/list", tags=["users"], response_model=list[User], response_description="List of users")
 async def list_users(quantity: int = 100) -> List[User]:
@@ -13,12 +14,11 @@ async def list_users(quantity: int = 100) -> List[User]:
     return ls
 
 
-
 @user_routes.get("/db", tags=["db"], response_model=list[str])
 async def list_db():
     """its a temporarly open route which returns all collections in the database"""
     ls = await db.list_collection_names()
-    
+
     return ls
 
 
