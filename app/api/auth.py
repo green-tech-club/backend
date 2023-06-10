@@ -47,7 +47,7 @@ async def verify_invitation(invitation: InvitationRead):
 
 
 @auth_routes.post("/is-invitation-valid")
-async def is_invitation_valid(invitation: InvitationRead = Depends(verify_invitation)):
+async def is_invitation_valid(invitation: Invitation = Depends(verify_invitation)):
     """
     Check if the provided invitation is valid and return its status and associated email.
     """
