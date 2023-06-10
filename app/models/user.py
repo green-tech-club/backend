@@ -6,6 +6,7 @@ class User(BeanieBaseUser[PydanticObjectId]):
     first_name: str
     last_name: str
     country: str
+    role: str
 
        
                         
@@ -13,6 +14,7 @@ class UserRead(schemas.BaseUser[PydanticObjectId]):
     first_name: str
     last_name: str
     country: str
+    role: str
 
 
 
@@ -20,6 +22,7 @@ class UserCreate(schemas.BaseUserCreate):
     first_name: str
     last_name: str
     country: str
+    role: str
 
 
 class UserUpdate(schemas.BaseUserUpdate):
