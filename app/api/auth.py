@@ -101,7 +101,7 @@ async def send_invitation(invitation: InvitationCreate,
                 )
         except exceptions.UserNotExists:
             invitation = await Invitation.create(email=invitation.email)
-            await send_email(to_emails=invitation.email,subject="Invitation to Greentech!" ,html_content=f"Your invitation code: {invitation.code}")
+            send_email(to_emails=invitation.email,subject="Invitation to Greentech!" ,html_content=f"Your invitation code: {invitation.code}")
             return {"invitation_code": invitation.code}
     else:
         raise HTTPException(
