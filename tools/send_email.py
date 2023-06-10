@@ -7,7 +7,7 @@ from app.settings import settings
 
 
 def send_email(
-        from_email='csaba.balogh.92@gmail.com',
+        from_email='greentechunideb@gmail.com',
         to_emails='csaba.balogh.92@gmail.com',
         subject='Sending with Twilio SendGrid is Fun',
         html_content='<strong>and easy to do anywhere, even with Python</strong>'
