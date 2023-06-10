@@ -11,6 +11,7 @@ from app.models.token import AccessToken
 from app.models.user import User, UserCreate
 from app.users import current_active_user, get_user_manager, UserManager
 from app.users import auth_backend
+from tools.send_email import send_email
 
 auth_routes = APIRouter()
 
@@ -100,7 +101,7 @@ async def send_invitation(invitation: InvitationCreate,
                 )
         except exceptions.UserNotExists:
             invitation = await Invitation.create(email=invitation.email)
-            # TODO: send the invitation code to the email address bundled in a link
+            await send_email(to_emails=invitation.email,subject="Invitation to Greentech!" ,html_content=f"Your invitation code: {invitation.code}")
             return {"invitation_code": invitation.code}
     else:
         raise HTTPException(

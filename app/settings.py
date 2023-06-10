@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     db_cluster: str
     secret_key: str
     token_lifetime: int
+    SENDGRID_API_KEY: str
 
     class Config:
         env_file = ".env"
