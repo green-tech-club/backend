@@ -15,7 +15,7 @@ app = FastAPI()
 origins = [
            "http://localhost:8000",
            "http://localhost:3000",
-           "https://unpap.herokuapp.com"
+           "https://unpap.onrender.com"
 ]
 
 app.add_middleware(
