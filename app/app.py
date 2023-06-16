@@ -60,6 +60,11 @@ app.include_router(auth_routes, prefix="/auth", tags=["auth"])
 @app.get("/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.email}!"}
+
+@app.get("/healthcheck")
+async def healthcheck():
+    return {"message": "OK", "status": 200}
+
     
 
 
